@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MindAR – Bilderkennungstest</title>
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,sans-serif;background:#111}
+#panel{position:fixed;z-index:9999;top:calc(env(safe-area-inset-top) + 12px);left:12px;right:12px;padding:14px;border-radius:12px;background:#7c2630;color:white;text-align:center;box-shadow:0 2px 10px #0006;pointer-events:none}
+#main{font-size:18px;font-weight:bold}#details{font-size:13px;margin-top:5px;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<div id="panel"><div id="main">Starte Test …</div><div id="details">Bitte warten</div></div>
+<a-scene mindar-image="imageTargetSrc: ./targets.mind; autoStart: true; uiLoading: yes; uiScanning: yes; uiError: yes;" embedded color-space="sRGB" renderer="colorManagement: true; alpha: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+<a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+<a-entity id="target" mindar-image-target="targetIndex: 0"><a-plane position="0 0 0.01" width="0.65" height="0.65" material="color: #00ff66; opacity: 0.85; transparent: true; side: double"></a-plane></a-entity>
+</a-scene>
+<script>
+const panel=document.querySelector('#panel'),main=document.querySelector('#main'),details=document.querySelector('#details');
+function show(title,description,ok){main.textContent=title;details.textContent=description;panel.style.background=ok?'#137a43':'#7c2630';}
+const scene=document.querySelector('a-scene'),target=document.querySelector('#target');
+show('Prüfe Tracking-Datei …','targets.mind wird geladen',false);
+fetch('./targets.mind',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r.arrayBuffer()}).then(b=>show('Tracking-Datei erreichbar',b.byteLength+' Bytes geladen – Kamera starten / Karte zeigen',false)).catch(e=>show('DATEIFEHLER',e.message,false));
+scene.addEventListener('arReady',()=>show('KAMERA BEREIT','Karte ins Bild halten – warte auf Erkennung',false));
+scene.addEventListener('arError',()=>show('AR-FEHLER','Kamera oder Tracking konnte nicht gestartet werden',false));
+target.addEventListener('targetFound',()=>show('BILD ERKANNT ✓','Tracking funktioniert! Grünes Quadrat auf der Karte.',true));
+target.addEventListener('targetLost',()=>show('BILD VERLOREN','Karte erneut ins Bild halten',false));
+</script>
+</body>
+</html>
